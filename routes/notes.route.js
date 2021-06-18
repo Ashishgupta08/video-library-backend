@@ -24,7 +24,13 @@ router.route('/')
     .post(authorizedUser, async (req, res) => {
         const { username, note } = req.body;
         try{
-            const updatedData = await User.findOneAndUpdate({ username: username }, { $push: { notes: note } })
+            const user = await User.findOne({ username: username })
+            const prevData = user.notes.find(item => item.videoId.toString() === note.videoId.toString())
+            if (prevData) {
+                const updatedData = await User.findOneAndUpdate({ username: username, "notes.videoId": note.videoId.toString() }, { $set: { "notes.$.videoNote": note.videoNote } })
+            } else {
+                const updatedData = await User.findOneAndUpdate({ username: username }, { $push: { notes: note } })
+            }
             res.json({
                 success: true,
                 result: "Notes created successfully."
