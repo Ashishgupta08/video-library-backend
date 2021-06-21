@@ -7,13 +7,36 @@ const { authorizedUser } = require('../utils/authorizedUser');
 
 const secret = process.env['SECRET'];
 
-router.get('/login', async (req, res) => {
+router.get('/getUserData', authorizedUser, async (req, res) => {
+    const { username } = req.body;
+    try {
+        const userData = await User.findOne({ username: username })
+            .populate({ path: 'history', populate: 'Video' })
+            .populate({ path: 'likedVideos', populate: 'Video' })
+            .populate({ path: 'savedVideos', populate: 'Video' })
+            .populate({ path: 'playlist', populate: { path: 'videos', populate: 'Video' } })
+            .populate({ path: 'notes', populate: { path: 'videoId', populate: 'Video' } });
+        res.json({
+            success: true,
+            result: userData
+        })
+    } catch (e) {
+        console.log(e.message);
+        res.status(501).json({
+            success: false,
+            error: e.message,
+            result: "Unable to fetch data"
+        })
+    }
+})
+
+router.post('/login', async (req, res) => {
     const { username, password } = req.body
     try {
         const user = await User.findOne({ username: username })
         if (user === null) {
             return res.status(404).json({
-                success: false, 
+                success: false,
                 result: "No user found"
             })
         }
@@ -33,33 +56,9 @@ router.get('/login', async (req, res) => {
     } catch (e) {
         console.log(e.message);
         res.status(404).json({
-        success: false,
-        error: e.message,
-        result: "No user found"
-        })
-    }
-})
-
-router.get('/getUserData', authorizedUser, async (req, res) => {
-    const { username } = req.body;
-    try {
-        const userData = await User.findOne({ username: username })
-                            .populate({ path: 'history', populate: 'Video' })
-                            .populate({ path: 'likedVideos', populate: 'Video' })
-                            .populate({ path: 'savedVideos', populate: 'Video' })
-                            .populate({ path: 'playlist', populate: { path: 'videos', populate: 'Video' } })
-                            .populate({ path: 'notes', populate: { path: 'videoId', populate: 'Video' } });
-        
-        res.json({
-            success: true,
-            result: userData
-        })
-    } catch (e) {
-        console.log(e.message);
-        res.status(501).json({
             success: false,
             error: e.message,
-            result: "Unable to fetch data"
+            result: "No user found"
         })
     }
 })
