@@ -24,10 +24,11 @@ router.route('/')
     .post(authorizedUser, async (req, res) => {
         const { username, playlistName, videoId } = req.body;
         try{
-            const updatedData = await User.findOneAndUpdate({ username: username }, { $push: { playlist: { playlistName: playlistName, videos: videoId } } })
+            const updatedData = await User.findOneAndUpdate({ username: username }, { $push: { playlist: { playlistName: playlistName, videos: videoId } } });
+            const { playlist } = await User.findOne({ username: username }).populate({ path: 'playlist', populate: { path: 'videos', populate: 'Video' } });
             res.json({
                 success: true,
-                result: "New Playlist created successfully."
+                result: playlist
             })
         }catch(e){
             console.log(e.message);
